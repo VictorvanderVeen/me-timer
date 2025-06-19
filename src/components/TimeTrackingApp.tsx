@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ConfigPanel } from './ConfigPanel';
 import { ClientManagement } from './ClientManagement';
@@ -51,7 +50,7 @@ export function TimeTrackingApp() {
     try {
       const supabaseClient = createClient(url, key);
       
-      // Test the connection
+      // Test the connection by trying to access the klanten table
       const { data, error } = await supabaseClient.from('klanten').select('count', { count: 'exact', head: true });
       
       if (error && error.code === 'PGRST116') {
@@ -60,7 +59,32 @@ export function TimeTrackingApp() {
         setIsConnected(true);
         setTablesExist(false);
         saveConfig(url, key);
-        toast.success('Verbonden met Supabase! Maak nu de tabellen aan.');
+        toast.error('Verbonden met Supabase, maar tabellen bestaan niet! Maak eerst de tabellen aan in je Supabase dashboard.');
+        console.log('Voer deze SQL uit in je Supabase SQL Editor:');
+        console.log(`
+CREATE TABLE IF NOT EXISTS klanten (
+    id SERIAL PRIMARY KEY,
+    naam VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS uren (
+    id SERIAL PRIMARY KEY,
+    klant_id INTEGER REFERENCES klanten(id) ON DELETE CASCADE,
+    klant_naam VARCHAR(255) NOT NULL,
+    uren DECIMAL(4,1) NOT NULL,
+    datum DATE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable Row Level Security (optioneel)
+ALTER TABLE klanten ENABLE ROW LEVEL SECURITY;
+ALTER TABLE uren ENABLE ROW LEVEL SECURITY;
+
+-- Create policies (voor publieke toegang)
+CREATE POLICY "Enable all operations for all users" ON klanten FOR ALL USING (true);
+CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true);
+        `);
         return true;
       } else if (error) {
         throw error;
@@ -85,10 +109,20 @@ export function TimeTrackingApp() {
     if (!supabase) return false;
 
     try {
-      // Since RPC might not work, we'll show instructions for manual creation
-      const sql = `
--- Voer deze SQL uit in je Supabase SQL Editor:
-
+      // Test if tables exist now
+      const { data, error } = await supabase.from('klanten').select('count', { count: 'exact', head: true });
+      
+      if (!error) {
+        // Tables exist now!
+        setTablesExist(true);
+        toast.success('Tabellen gevonden! Laden van data...');
+        await loadData(supabase);
+        return true;
+      } else if (error.code === 'PGRST116') {
+        // Still don't exist
+        toast.error('Tabellen bestaan nog steeds niet. Voer de SQL uit in je Supabase dashboard en probeer opnieuw.');
+        console.log('SQL om uit te voeren in Supabase SQL Editor:');
+        console.log(`
 CREATE TABLE IF NOT EXISTS klanten (
     id SERIAL PRIMARY KEY,
     naam VARCHAR(255) NOT NULL,
@@ -104,33 +138,19 @@ CREATE TABLE IF NOT EXISTS uren (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable Row Level Security (optioneel)
 ALTER TABLE klanten ENABLE ROW LEVEL SECURITY;
 ALTER TABLE uren ENABLE ROW LEVEL SECURITY;
 
--- Create policies (optioneel - voor publieke toegang)
 CREATE POLICY "Enable all operations for all users" ON klanten FOR ALL USING (true);
 CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true);
-      `;
-      
-      console.log('SQL om uit te voeren:', sql);
-      toast.error('Tabellen handmatig aanmaken in Supabase dashboard. Zie console voor SQL.');
-      
-      // Try to test if tables exist after a moment
-      setTimeout(async () => {
-        try {
-          await loadData(supabase);
-          setTablesExist(true);
-          toast.success('Tabellen succesvol aangemaakt!');
-        } catch (error) {
-          console.log('Tables not ready yet');
-        }
-      }, 2000);
-      
-      return false;
+        `);
+        return false;
+      } else {
+        throw error;
+      }
     } catch (error: any) {
-      console.error('Fout bij aanmaken tabellen:', error);
-      toast.error('Fout bij aanmaken tabellen. Zie console voor SQL.');
+      console.error('Fout bij controleren tabellen:', error);
+      toast.error('Fout bij controleren tabellen: ' + error.message);
       return false;
     }
   };
