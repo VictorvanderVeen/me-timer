@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ConfigPanel } from './ConfigPanel';
 import { ClientManagement } from './ClientManagement';
@@ -327,6 +328,7 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
               onMonthChange={setSelectedMonth}
               onDeleteRecord={deleteTimeRecord}
               disabled={!canUseApp}
+              clients={clients}
             />
           </div>
         </main>

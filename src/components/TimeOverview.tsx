@@ -1,7 +1,12 @@
 
-import React, { useMemo } from 'react';
-import { Trash2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Trash2, X, Calendar } from 'lucide-react';
 import { Button } from './ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { Calendar as CalendarComponent } from './ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface TimeRecord {
   id: number;
@@ -12,15 +17,33 @@ interface TimeRecord {
   created_at: string;
 }
 
+interface Client {
+  id: number;
+  naam: string;
+  created_at: string;
+}
+
 interface TimeOverviewProps {
   timeRecords: TimeRecord[];
   selectedMonth: string;
   onMonthChange: (month: string) => void;
   onDeleteRecord: (id: number) => Promise<boolean>;
   disabled: boolean;
+  clients?: Client[];
 }
 
-export function TimeOverview({ timeRecords, selectedMonth, onMonthChange, onDeleteRecord, disabled }: TimeOverviewProps) {
+export function TimeOverview({ 
+  timeRecords, 
+  selectedMonth, 
+  onMonthChange, 
+  onDeleteRecord, 
+  disabled,
+  clients = []
+}: TimeOverviewProps) {
+  const [selectedClient, setSelectedClient] = useState<string>('all');
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+
   const months = useMemo(() => {
     const monthSet = new Set<string>();
     timeRecords.forEach(record => {
@@ -30,11 +53,31 @@ export function TimeOverview({ timeRecords, selectedMonth, onMonthChange, onDele
   }, [timeRecords]);
 
   const filteredRecords = useMemo(() => {
-    if (selectedMonth === 'all') {
-      return [...timeRecords];
+    let filtered = [...timeRecords];
+
+    // Filter op klant
+    if (selectedClient !== 'all') {
+      filtered = filtered.filter(record => record.klant_id.toString() === selectedClient);
     }
-    return timeRecords.filter(record => record.datum.startsWith(selectedMonth));
-  }, [timeRecords, selectedMonth]);
+
+    // Filter op datumbereik
+    if (startDate) {
+      const startDateStr = format(startDate, 'yyyy-MM-dd');
+      filtered = filtered.filter(record => record.datum >= startDateStr);
+    }
+    
+    if (endDate) {
+      const endDateStr = format(endDate, 'yyyy-MM-dd');
+      filtered = filtered.filter(record => record.datum <= endDateStr);
+    }
+
+    // Legacy maand filter (alleen als geen datumbereik is ingesteld)
+    if (selectedMonth !== 'all' && !startDate && !endDate) {
+      filtered = filtered.filter(record => record.datum.startsWith(selectedMonth));
+    }
+
+    return filtered;
+  }, [timeRecords, selectedClient, startDate, endDate, selectedMonth]);
 
   const sortedRecords = useMemo(() => {
     return filteredRecords.sort((a, b) => new Date(b.datum).getTime() - new Date(a.datum).getTime());
@@ -49,6 +92,15 @@ export function TimeOverview({ timeRecords, selectedMonth, onMonthChange, onDele
       await onDeleteRecord(id);
     }
   };
+
+  const resetFilters = () => {
+    setSelectedClient('all');
+    setStartDate(undefined);
+    setEndDate(undefined);
+    onMonthChange('all');
+  };
+
+  const hasActiveFilters = selectedClient !== 'all' || startDate || endDate || selectedMonth !== 'all';
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -65,19 +117,124 @@ export function TimeOverview({ timeRecords, selectedMonth, onMonthChange, onDele
     <div className="bg-white p-6 rounded-xl shadow-md">
       <div className="flex justify-between items-center mb-4 border-b pb-2">
         <h2 className="text-xl font-semibold">Urenoverzicht</h2>
-        <select
-          value={selectedMonth}
-          onChange={(e) => onMonthChange(e.target.value)}
-          disabled={disabled}
-          className="px-3 py-1 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="all">Alle Maanden</option>
-          {months.map(month => (
-            <option key={month} value={month}>
-              {formatMonthName(month)}
-            </option>
-          ))}
-        </select>
+        {hasActiveFilters && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={resetFilters}
+            className="text-slate-600 hover:text-slate-800"
+          >
+            <X className="h-4 w-4 mr-1" />
+            Reset filters
+          </Button>
+        )}
+      </div>
+
+      {/* Filter Controls */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-slate-50 rounded-lg">
+        {/* Klant Filter */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Klant</label>
+          <Select 
+            value={selectedClient} 
+            onValueChange={setSelectedClient}
+            disabled={disabled}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Alle klanten" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle klanten</SelectItem>
+              {clients.map(client => (
+                <SelectItem key={client.id} value={client.id.toString()}>
+                  {client.naam}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Start Datum */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Van datum</label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !startDate && "text-muted-foreground"
+                )}
+                disabled={disabled}
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                {startDate ? format(startDate, "dd-MM-yyyy") : "Selecteer datum"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <CalendarComponent
+                mode="single"
+                selected={startDate}
+                onSelect={setStartDate}
+                initialFocus
+                className="pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* End Datum */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Tot datum</label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !endDate && "text-muted-foreground"
+                )}
+                disabled={disabled}
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                {endDate ? format(endDate, "dd-MM-yyyy") : "Selecteer datum"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <CalendarComponent
+                mode="single"
+                selected={endDate}
+                onSelect={setEndDate}
+                initialFocus
+                className="pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* Legacy Maand Filter (alleen zichtbaar als geen datumbereik) */}
+        {!startDate && !endDate && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Maand</label>
+            <Select
+              value={selectedMonth}
+              onValueChange={onMonthChange}
+              disabled={disabled}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Maanden</SelectItem>
+                {months.map(month => (
+                  <SelectItem key={month} value={month}>
+                    {formatMonthName(month)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -100,7 +257,10 @@ export function TimeOverview({ timeRecords, selectedMonth, onMonthChange, onDele
             ) : sortedRecords.length === 0 ? (
               <tr>
                 <td colSpan={4} className="p-4 text-center text-slate-500">
-                  Geen uren gevonden voor deze periode.
+                  {hasActiveFilters 
+                    ? "Geen uren gevonden voor de geselecteerde filters." 
+                    : "Geen uren gevonden voor deze periode."
+                  }
                 </td>
               </tr>
             ) : (
@@ -132,7 +292,7 @@ export function TimeOverview({ timeRecords, selectedMonth, onMonthChange, onDele
           <tfoot className="bg-slate-100 font-bold">
             <tr>
               <td colSpan={2} className="p-3 text-right">
-                Totaal uren deze maand:
+                Totaal uren{hasActiveFilters ? ' (gefilterd)' : ' deze maand'}:
               </td>
               <td className="p-3 text-right">
                 {totalHours.toFixed(1)}
