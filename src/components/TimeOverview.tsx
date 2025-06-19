@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { Trash2, X, Calendar } from 'lucide-react';
 import { Button } from './ui/button';
@@ -80,7 +79,7 @@ export function TimeOverview({
   }, [timeRecords, selectedClient, startDate, endDate, selectedMonth]);
 
   const sortedRecords = useMemo(() => {
-    return filteredRecords.sort((a, b) => new Date(b.datum).getTime() - new Date(a.datum).getTime());
+    return filteredRecords.sort((a, b) => new Date(a.datum).getTime() - new Date(b.datum).getTime());
   }, [filteredRecords]);
 
   const totalHours = useMemo(() => {
