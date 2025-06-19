@@ -79,7 +79,7 @@ export function TimeOverview({
   }, [timeRecords, selectedClient, startDate, endDate, selectedMonth]);
 
   const sortedRecords = useMemo(() => {
-    return filteredRecords.sort((a, b) => new Date(a.datum).getTime() - new Date(b.datum).getTime());
+    return filteredRecords.sort((a, b) => new Date(b.datum).getTime() - new Date(a.datum).getTime());
   }, [filteredRecords]);
 
   const totalHours = useMemo(() => {
