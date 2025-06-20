@@ -52,7 +52,8 @@ export function ClientManagement({
   const handleStartEdit = (client: Client) => {
     setEditingClient(client);
     setEditName(client.naam);
-    setEditRate(client.hourly_rate.toString());
+    // Add null check for hourly_rate
+    setEditRate((client.hourly_rate || 0).toString());
   };
 
   const handleUpdateClient = async () => {
@@ -178,7 +179,7 @@ export function ClientManagement({
                   <div>
                     <span className="font-medium">{client.naam}</span>
                     <div className="text-sm text-slate-600">
-                      {formatHourlyRate(client.hourly_rate)}
+                      {formatHourlyRate(client.hourly_rate || 0)}
                     </div>
                   </div>
                   <div className="flex space-x-1">
