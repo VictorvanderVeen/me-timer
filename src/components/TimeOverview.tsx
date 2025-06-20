@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import { Trash2, X, Calendar } from 'lucide-react';
 import { Button } from './ui/button';
@@ -6,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Calendar as CalendarComponent } from './ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/currency';
 
 interface TimeRecord {
   id: number;
@@ -19,6 +21,7 @@ interface TimeRecord {
 interface Client {
   id: number;
   naam: string;
+  hourly_rate: number;
   created_at: string;
 }
 
@@ -82,9 +85,26 @@ export function TimeOverview({
     return filteredRecords.sort((a, b) => new Date(b.datum).getTime() - new Date(a.datum).getTime());
   }, [filteredRecords]);
 
-  const totalHours = useMemo(() => {
-    return filteredRecords.reduce((total, record) => total + parseFloat(record.uren.toString()), 0);
-  }, [filteredRecords]);
+  const enrichedRecords = useMemo(() => {
+    return sortedRecords.map(record => {
+      const client = clients.find(c => c.id === record.klant_id);
+      const hourlyRate = client?.hourly_rate || 0;
+      const revenue = parseFloat(record.uren.toString()) * hourlyRate;
+      
+      return {
+        ...record,
+        hourlyRate,
+        revenue
+      };
+    });
+  }, [sortedRecords, clients]);
+
+  const totals = useMemo(() => {
+    const totalHours = filteredRecords.reduce((total, record) => total + parseFloat(record.uren.toString()), 0);
+    const totalRevenue = enrichedRecords.reduce((total, record) => total + record.revenue, 0);
+    
+    return { totalHours, totalRevenue };
+  }, [filteredRecords, enrichedRecords]);
 
   const handleDeleteRecord = async (id: number) => {
     if (confirm('Weet je zeker dat je deze urenregistratie wilt verwijderen?')) {
@@ -110,6 +130,13 @@ export function TimeOverview({
     const [year, month] = monthString.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1);
     return date.toLocaleString('nl-NL', { month: 'long', year: 'numeric' });
+  };
+
+  const getRevenueColor = (revenue: number) => {
+    if (revenue === 0) return 'text-slate-400';
+    if (revenue < 100) return 'text-green-600';
+    if (revenue < 250) return 'text-green-700';
+    return 'text-green-800 font-bold';
   };
 
   return (
@@ -243,19 +270,21 @@ export function TimeOverview({
               <th className="p-3 text-sm font-semibold tracking-wide">Datum</th>
               <th className="p-3 text-sm font-semibold tracking-wide">Klant</th>
               <th className="p-3 text-sm font-semibold tracking-wide text-right">Uren</th>
+              <th className="p-3 text-sm font-semibold tracking-wide text-right">Tarief</th>
+              <th className="p-3 text-sm font-semibold tracking-wide text-right">Omzet</th>
               <th className="p-3 text-sm font-semibold tracking-wide text-center">Actie</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {disabled ? (
               <tr>
-                <td colSpan={4} className="p-4 text-center text-slate-500">
+                <td colSpan={6} className="p-4 text-center text-slate-500">
                   Verbind eerst met Supabase
                 </td>
               </tr>
-            ) : sortedRecords.length === 0 ? (
+            ) : enrichedRecords.length === 0 ? (
               <tr>
-                <td colSpan={4} className="p-4 text-center text-slate-500">
+                <td colSpan={6} className="p-4 text-center text-slate-500">
                   {hasActiveFilters 
                     ? "Geen uren gevonden voor de geselecteerde filters." 
                     : "Geen uren gevonden voor deze periode."
@@ -263,7 +292,7 @@ export function TimeOverview({
                 </td>
               </tr>
             ) : (
-              sortedRecords.map(record => (
+              enrichedRecords.map(record => (
                 <tr key={record.id} className="hover:bg-slate-50 transition-colors">
                   <td className="p-3 text-sm text-slate-700">
                     {formatDate(record.datum)}
@@ -273,6 +302,12 @@ export function TimeOverview({
                   </td>
                   <td className="p-3 text-sm text-slate-700 font-bold text-right">
                     {parseFloat(record.uren.toString()).toFixed(1)}
+                  </td>
+                  <td className="p-3 text-sm text-slate-600 text-right">
+                    {record.hourlyRate > 0 ? formatCurrency(record.hourlyRate) : '-'}
+                  </td>
+                  <td className={`p-3 text-sm text-right font-bold ${getRevenueColor(record.revenue)}`}>
+                    {record.revenue > 0 ? formatCurrency(record.revenue) : '-'}
                   </td>
                   <td className="p-3 text-center">
                     <Button
@@ -291,10 +326,16 @@ export function TimeOverview({
           <tfoot className="bg-slate-100 font-bold">
             <tr>
               <td colSpan={2} className="p-3 text-right">
-                Totaal uren{hasActiveFilters ? ' (gefilterd)' : ' deze maand'}:
+                Totaal{hasActiveFilters ? ' (gefilterd)' : ' deze periode'}:
               </td>
               <td className="p-3 text-right">
-                {totalHours.toFixed(1)}
+                {totals.totalHours.toFixed(1)}
+              </td>
+              <td className="p-3 text-right text-slate-600">
+                -
+              </td>
+              <td className="p-3 text-right text-green-800 font-bold">
+                {formatCurrency(totals.totalRevenue)}
               </td>
               <td className="p-3"></td>
             </tr>

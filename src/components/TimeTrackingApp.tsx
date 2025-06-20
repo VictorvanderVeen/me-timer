@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ConfigPanel } from './ConfigPanel';
 import { ClientManagement } from './ClientManagement';
@@ -10,6 +9,7 @@ import { toast } from 'sonner';
 interface Client {
   id: number;
   naam: string;
+  hourly_rate: number;
   created_at: string;
 }
 
@@ -66,6 +66,7 @@ export function TimeTrackingApp() {
 CREATE TABLE IF NOT EXISTS klanten (
     id SERIAL PRIMARY KEY,
     naam VARCHAR(255) NOT NULL,
+    hourly_rate DECIMAL(8,2) DEFAULT 0.00,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -127,6 +128,7 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
 CREATE TABLE IF NOT EXISTS klanten (
     id SERIAL PRIMARY KEY,
     naam VARCHAR(255) NOT NULL,
+    hourly_rate DECIMAL(8,2) DEFAULT 0.00,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -185,13 +187,13 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
     }
   };
 
-  const addClient = async (naam: string) => {
-    if (!naam || !supabase) return false;
+  const addClient = async (naam: string, hourlyRate: number) => {
+    if (!naam || !supabase || hourlyRate <= 0) return false;
     
     try {
       const { data, error } = await supabase
         .from('klanten')
-        .insert([{ naam }])
+        .insert([{ naam, hourly_rate: hourlyRate }])
         .select();
       
       if (error) throw error;
@@ -202,6 +204,36 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
     } catch (error: any) {
       console.error('Fout bij toevoegen klant:', error);
       toast.error('Fout bij toevoegen klant: ' + error.message);
+      return false;
+    }
+  };
+
+  const updateClient = async (id: number, naam: string, hourlyRate: number) => {
+    if (!supabase || hourlyRate <= 0) return false;
+    
+    try {
+      const { data, error } = await supabase
+        .from('klanten')
+        .update({ naam, hourly_rate: hourlyRate })
+        .eq('id', id)
+        .select();
+      
+      if (error) throw error;
+      
+      setClients(prev => prev.map(client => 
+        client.id === id ? data[0] : client
+      ));
+      
+      // Update client names in existing time records
+      setTimeRecords(prev => prev.map(record => 
+        record.klant_id === id ? { ...record, klant_naam: naam } : record
+      ));
+      
+      toast.success('Klant bijgewerkt!');
+      return true;
+    } catch (error: any) {
+      console.error('Fout bij bijwerken klant:', error);
+      toast.error('Fout bij bijwerken klant: ' + error.message);
       return false;
     }
   };
@@ -315,6 +347,7 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
             <ClientManagement
               clients={clients}
               onAddClient={addClient}
+              onUpdateClient={updateClient}
               onDeleteClient={deleteClient}
               disabled={!canUseApp}
             />
