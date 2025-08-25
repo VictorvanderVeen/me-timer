@@ -10,9 +10,10 @@ interface ConfigPanelProps {
   isConnected: boolean;
   tablesExist: boolean;
   loadConfig: () => { url: string; key: string } | null;
+  isAutoConnecting?: boolean;
 }
 
-export function ConfigPanel({ onConnect, onCreateTables, isConnected, tablesExist, loadConfig }: ConfigPanelProps) {
+export function ConfigPanel({ onConnect, onCreateTables, isConnected, tablesExist, loadConfig, isAutoConnecting }: ConfigPanelProps) {
   const [url, setUrl] = useState('');
   const [key, setKey] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
@@ -40,6 +41,17 @@ export function ConfigPanel({ onConnect, onCreateTables, isConnected, tablesExis
 
   if (isConnected && tablesExist) {
     return null; // Hide panel when everything is set up
+  }
+
+  if (isAutoConnecting) {
+    return (
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          <span className="text-blue-800">Automatisch verbinden met opgeslagen configuratie...</span>
+        </div>
+      </div>
+    );
   }
 
   const getConnectionStatus = () => {

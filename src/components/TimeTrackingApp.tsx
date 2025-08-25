@@ -29,6 +29,7 @@ export function TimeTrackingApp() {
   const [clients, setClients] = useState<Client[]>([]);
   const [timeRecords, setTimeRecords] = useState<TimeRecord[]>([]);
   const [selectedMonth, setSelectedMonth] = useState('all');
+  const [isAutoConnecting, setIsAutoConnecting] = useState(false);
 
   const saveConfig = (url: string, key: string) => {
     localStorage.setItem('supabase-config', JSON.stringify({ url, key }));
@@ -310,7 +311,10 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
   useEffect(() => {
     const config = loadConfig();
     if (config) {
-      connectToSupabase(config.url, config.key);
+      setIsAutoConnecting(true);
+      connectToSupabase(config.url, config.key).finally(() => {
+        setIsAutoConnecting(false);
+      });
     }
   }, []);
 
@@ -332,6 +336,7 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
           isConnected={isConnected}
           tablesExist={tablesExist}
           loadConfig={loadConfig}
+          isAutoConnecting={isAutoConnecting}
         />
 
         {/* Main Content */}
