@@ -44,7 +44,9 @@ export function TimeTrackingApp() {
   };
 
   const connectToSupabase = async (url: string, key: string) => {
+    console.log('🔗 Poging tot verbinden met Supabase...');
     if (!url || !key) {
+      console.log('❌ URL of key ontbreekt');
       toast.error('Vul alle velden in');
       return false;
     }
@@ -309,12 +311,17 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
   };
 
   useEffect(() => {
+    console.log('🔄 App gestart, controleer opgeslagen configuratie...');
     const config = loadConfig();
+    console.log('📋 Opgeslagen configuratie:', config ? 'gevonden' : 'niet gevonden');
     if (config) {
+      console.log('🔗 Start automatische verbinding...');
       setIsAutoConnecting(true);
       connectToSupabase(config.url, config.key).finally(() => {
         setIsAutoConnecting(false);
       });
+    } else {
+      console.log('⚠️ Geen configuratie gevonden, gebruiker moet handmatig verbinden');
     }
   }, []);
 
