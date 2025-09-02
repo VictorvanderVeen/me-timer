@@ -145,30 +145,31 @@ export function TimeOverview({
 
   return (
     <div className="bg-card p-6 rounded-2xl shadow-soft border border-border/50 backdrop-blur-sm">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-3">
           <div className="w-3 h-8 gradient-accent rounded-full"></div>
           <h2 className="text-xl font-bold text-card-foreground">Urenoverzicht</h2>
         </div>
-        <div className="flex items-center gap-2">
+        
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
           {/* View Mode Toggle */}
           <div className="flex items-center bg-muted rounded-xl p-1 shadow-sm">
             <Button
               variant={viewMode === 'table' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('table')}
-              className="h-8 px-3"
+              className="flex-1 sm:flex-none h-8 px-4"
             >
-              <Table className="h-4 w-4 mr-1" />
+              <Table className="h-4 w-4 mr-2" />
               Tabel
             </Button>
             <Button
               variant={viewMode === 'calendar' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('calendar')}
-              className="h-8 px-3"
+              className="flex-1 sm:flex-none h-8 px-4"
             >
-              <CalendarDays className="h-4 w-4 mr-1" />
+              <CalendarDays className="h-4 w-4 mr-2" />
               Kalender
             </Button>
           </div>
@@ -178,9 +179,9 @@ export function TimeOverview({
               variant="outline"
               size="sm"
               onClick={resetFilters}
-              className="text-slate-600 hover:text-slate-800"
+              className="text-muted-foreground hover:text-card-foreground rounded-xl shadow-sm"
             >
-              <X className="h-4 w-4 mr-1" />
+              <X className="h-4 w-4 mr-2" />
               Reset filters
             </Button>
           )}
@@ -297,14 +298,17 @@ export function TimeOverview({
       )}
 
       {/* Content */}
-      {viewMode === 'calendar' ? (
-        <CalendarView
-          timeRecords={filteredRecords}
-          clients={clients}
-          disabled={disabled}
-          onDateClick={onDateClick}
-        />
-      ) : (
+      <div className="overflow-hidden">
+        {viewMode === 'calendar' ? (
+          <div className="w-full">
+            <CalendarView
+              timeRecords={filteredRecords}
+              clients={clients}
+              disabled={disabled}
+              onDateClick={onDateClick}
+            />
+          </div>
+        ) : (
         <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead className="bg-slate-50">
@@ -385,6 +389,7 @@ export function TimeOverview({
         </table>
         </div>
       )}
+      </div>
     </div>
   );
 }

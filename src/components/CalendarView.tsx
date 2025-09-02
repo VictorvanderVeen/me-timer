@@ -243,9 +243,9 @@ export function CalendarView({ timeRecords, clients, disabled, onDateClick }: Ca
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-hidden">
       {/* Controls */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-1">
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
@@ -306,8 +306,10 @@ export function CalendarView({ timeRecords, clients, disabled, onDateClick }: Ca
         </div>
 
       {/* Calendar */}
-      <div className="border rounded-lg overflow-hidden">
-        {viewType === 'week' ? renderWeekView() : renderMonthView()}
+      <div className="border rounded-lg overflow-hidden w-full">
+        <div className="overflow-x-auto">
+          {viewType === 'week' ? renderWeekView() : renderMonthView()}
+        </div>
       </div>
     </div>
   );

@@ -330,9 +330,9 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto p-4 md:p-8 max-w-6xl">
+      <div className="container mx-auto p-2 sm:p-4 md:p-8 max-w-6xl">
         {/* Header */}
-        <header className="text-center mb-12">
+        <header className="text-center mb-8 sm:mb-12 px-2">
           <div className="relative">
             <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent mb-4">
               Urenregistratie
@@ -355,9 +355,9 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
         />
 
         {/* Main Content */}
-        <main className={`grid grid-cols-1 md:grid-cols-3 gap-8 transition-opacity ${canUseApp ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
+        <main className={`grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8 transition-opacity ${canUseApp ? 'opacity-100' : 'opacity-50 pointer-events-none'} px-2 sm:px-0`}>
           {/* Left Column */}
-          <div className="md:col-span-1 space-y-8">
+          <div className="lg:col-span-1 space-y-4 sm:space-y-8">
             <TimeEntry
               clients={clients}
               onAddTimeRecord={addTimeRecord}
@@ -375,7 +375,7 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
           </div>
 
           {/* Right Column */}
-          <div className="md:col-span-2">
+          <div className="lg:col-span-2 min-w-0">
             <TimeOverview
               timeRecords={timeRecords}
               selectedMonth={selectedMonth}
