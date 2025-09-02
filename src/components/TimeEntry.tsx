@@ -13,20 +13,25 @@ interface TimeEntryProps {
   clients: Client[];
   onAddTimeRecord: (klantId: number, klantNaam: string, uren: number, datum: string) => Promise<boolean>;
   disabled: boolean;
+  selectedDate?: string; // Format: YYYY-MM-DD
 }
 
-export function TimeEntry({ clients, onAddTimeRecord, disabled }: TimeEntryProps) {
+export function TimeEntry({ clients, onAddTimeRecord, disabled, selectedDate }: TimeEntryProps) {
   const [selectedClientId, setSelectedClientId] = useState('');
   const [hours, setHours] = useState('');
   const [date, setDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Set today's date by default
-    const today = new Date();
-    const formattedDate = today.toISOString().split('T')[0];
-    setDate(formattedDate);
-  }, []);
+    // Set selected date if provided, otherwise today's date
+    if (selectedDate) {
+      setDate(selectedDate);
+    } else {
+      const today = new Date();
+      const formattedDate = today.toISOString().split('T')[0];
+      setDate(formattedDate);
+    }
+  }, [selectedDate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

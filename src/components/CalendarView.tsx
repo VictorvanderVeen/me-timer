@@ -25,11 +25,12 @@ interface CalendarViewProps {
   timeRecords: TimeRecord[];
   clients: Client[];
   disabled: boolean;
+  onDateClick?: (date: string) => void; // Format: YYYY-MM-DD
 }
 
 type ViewType = 'week' | 'month';
 
-export function CalendarView({ timeRecords, clients, disabled }: CalendarViewProps) {
+export function CalendarView({ timeRecords, clients, disabled, onDateClick }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<ViewType>('week');
 
@@ -99,7 +100,12 @@ export function CalendarView({ timeRecords, clients, disabled }: CalendarViewPro
           const totalRevenue = dayRecords.reduce((sum, record) => sum + record.revenue, 0);
           
           return (
-            <div key={day.toISOString()} className="min-h-[200px] p-2 border-r last:border-r-0 border-b bg-white">
+            <div 
+              key={day.toISOString()} 
+              className="min-h-[200px] p-2 border-r last:border-r-0 border-b bg-white hover:bg-slate-50 cursor-pointer transition-colors"
+              onClick={() => onDateClick && onDateClick(format(day, 'yyyy-MM-dd'))}
+              title={`Klik om uren toe te voegen voor ${format(day, 'd MMM', { locale: nl })}`}
+            >
               {dayRecords.length > 0 && (
                 <div className="space-y-1">
                   {dayRecords.map(record => (
@@ -181,9 +187,11 @@ export function CalendarView({ timeRecords, clients, disabled }: CalendarViewPro
               return (
                 <div 
                   key={day.toISOString()} 
-                  className={`min-h-[100px] p-1 border rounded ${
-                    isCurrentMonth ? 'bg-white' : 'bg-slate-50'
+                  className={`min-h-[100px] p-1 border rounded cursor-pointer transition-colors ${
+                    isCurrentMonth ? 'bg-white hover:bg-slate-50' : 'bg-slate-50 hover:bg-slate-100'
                   } ${isSameDay(day, new Date()) ? 'ring-2 ring-blue-500' : ''}`}
+                  onClick={() => onDateClick && onDateClick(format(day, 'yyyy-MM-dd'))}
+                  title={`Klik om uren toe te voegen voor ${format(day, 'd MMM', { locale: nl })}`}
                 >
                   <div className={`text-sm font-medium mb-1 ${
                     isCurrentMonth ? 'text-slate-800' : 'text-slate-400'

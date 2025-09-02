@@ -33,6 +33,7 @@ interface TimeOverviewProps {
   onDeleteRecord: (id: number) => Promise<boolean>;
   disabled: boolean;
   clients?: Client[];
+  onDateClick?: (date: string) => void;
 }
 
 export function TimeOverview({ 
@@ -41,7 +42,8 @@ export function TimeOverview({
   onMonthChange, 
   onDeleteRecord, 
   disabled,
-  clients = []
+  clients = [],
+  onDateClick
 }: TimeOverviewProps) {
   const [selectedClient, setSelectedClient] = useState<string>('all');
   const [startDate, setStartDate] = useState<Date | undefined>();
@@ -297,6 +299,7 @@ export function TimeOverview({
           timeRecords={filteredRecords}
           clients={clients}
           disabled={disabled}
+          onDateClick={onDateClick}
         />
       ) : (
         <div className="overflow-x-auto">

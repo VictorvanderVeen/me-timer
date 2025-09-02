@@ -30,6 +30,7 @@ export function TimeTrackingApp() {
   const [timeRecords, setTimeRecords] = useState<TimeRecord[]>([]);
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [isAutoConnecting, setIsAutoConnecting] = useState(false);
+  const [selectedDateForEntry, setSelectedDateForEntry] = useState<string | undefined>();
 
   const saveConfig = (url: string, key: string) => {
     localStorage.setItem('supabase-config', JSON.stringify({ url, key }));
@@ -354,6 +355,7 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
               clients={clients}
               onAddTimeRecord={addTimeRecord}
               disabled={!canUseApp}
+              selectedDate={selectedDateForEntry}
             />
             
             <ClientManagement
@@ -374,6 +376,7 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
               onDeleteRecord={deleteTimeRecord}
               disabled={!canUseApp}
               clients={clients}
+              onDateClick={setSelectedDateForEntry}
             />
           </div>
         </main>
