@@ -1,6 +1,7 @@
 
 import React, { useMemo, useState } from 'react';
-import { Trash2, X, Calendar } from 'lucide-react';
+import { Trash2, X, Calendar, Table, CalendarDays } from 'lucide-react';
+import { CalendarView } from './CalendarView';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -45,6 +46,7 @@ export function TimeOverview({
   const [selectedClient, setSelectedClient] = useState<string>('all');
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
+  const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
 
   const months = useMemo(() => {
     const monthSet = new Set<string>();
@@ -143,21 +145,46 @@ export function TimeOverview({
     <div className="bg-white p-6 rounded-xl shadow-md">
       <div className="flex justify-between items-center mb-4 border-b pb-2">
         <h2 className="text-xl font-semibold">Urenoverzicht</h2>
-        {hasActiveFilters && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={resetFilters}
-            className="text-slate-600 hover:text-slate-800"
-          >
-            <X className="h-4 w-4 mr-1" />
-            Reset filters
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* View Mode Toggle */}
+          <div className="flex items-center bg-slate-100 rounded-lg p-1">
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('table')}
+              className="h-8 px-3"
+            >
+              <Table className="h-4 w-4 mr-1" />
+              Tabel
+            </Button>
+            <Button
+              variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('calendar')}
+              className="h-8 px-3"
+            >
+              <CalendarDays className="h-4 w-4 mr-1" />
+              Kalender
+            </Button>
+          </div>
+          
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={resetFilters}
+              className="text-slate-600 hover:text-slate-800"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Reset filters
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Filter Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-slate-50 rounded-lg">
+      {/* Filter Controls - alleen zichtbaar in tabelweergave */}
+      {viewMode === 'table' && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-slate-50 rounded-lg">
         {/* Klant Filter */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Klant</label>
@@ -261,9 +288,18 @@ export function TimeOverview({
             </Select>
           </div>
         )}
-      </div>
+        </div>
+      )}
 
-      <div className="overflow-x-auto">
+      {/* Content */}
+      {viewMode === 'calendar' ? (
+        <CalendarView
+          timeRecords={filteredRecords}
+          clients={clients}
+          disabled={disabled}
+        />
+      ) : (
+        <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead className="bg-slate-50">
             <tr>
@@ -341,7 +377,8 @@ export function TimeOverview({
             </tr>
           </tfoot>
         </table>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
