@@ -144,12 +144,15 @@ export function TimeOverview({
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md">
-      <div className="flex justify-between items-center mb-4 border-b pb-2">
-        <h2 className="text-xl font-semibold">Urenoverzicht</h2>
+    <div className="bg-card p-6 rounded-2xl shadow-soft border border-border/50 backdrop-blur-sm">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-3 h-8 gradient-accent rounded-full"></div>
+          <h2 className="text-xl font-bold text-card-foreground">Urenoverzicht</h2>
+        </div>
         <div className="flex items-center gap-2">
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-slate-100 rounded-lg p-1">
+          <div className="flex items-center bg-muted rounded-xl p-1 shadow-sm">
             <Button
               variant={viewMode === 'table' ? 'default' : 'ghost'}
               size="sm"
@@ -186,7 +189,7 @@ export function TimeOverview({
 
       {/* Filter Controls - alleen zichtbaar in tabelweergave */}
       {viewMode === 'table' && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-slate-50 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-6 gradient-subtle rounded-2xl border border-border/30 shadow-sm">
         {/* Klant Filter */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">Klant</label>

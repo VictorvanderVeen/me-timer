@@ -93,8 +93,11 @@ export function ClientManagement({
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md">
-      <h2 className="text-xl font-semibold mb-4 border-b pb-2">Klanten Beheren</h2>
+    <div className="bg-card p-6 rounded-2xl shadow-soft border border-border/50 backdrop-blur-sm">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-3 h-8 gradient-secondary rounded-full"></div>
+        <h2 className="text-xl font-bold text-card-foreground">Klanten Beheer</h2>
+      </div>
       
       <div className="space-y-3 mb-4">
         <div className="flex items-center space-x-2">
@@ -121,7 +124,7 @@ export function ClientManagement({
           <Button 
             onClick={handleAddClient}
             disabled={disabled || isAdding || !newClientName.trim() || !newClientRate.trim()}
-            className="bg-blue-600 hover:bg-blue-700 shrink-0"
+            className="gradient-secondary text-secondary-foreground font-semibold shrink-0 rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
           >
             {isAdding ? 'Toevoegen...' : 'Voeg toe'}
           </Button>
@@ -135,16 +138,16 @@ export function ClientManagement({
           <li className="text-slate-500 px-2">Voeg je eerste klant toe.</li>
         ) : (
           clients.map(client => (
-            <li key={client.id} className="bg-slate-100 p-3 rounded-md">
+            <li key={client.id} className="gradient-subtle p-4 rounded-xl border border-border/30 shadow-sm">
               {editingClient?.id === client.id ? (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center space-x-2">
                     <Input
                       type="text"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      className="flex-1"
+                      className="flex-1 rounded-xl"
                     />
                     <Input
                       type="number"
@@ -153,14 +156,14 @@ export function ClientManagement({
                       value={editRate}
                       onChange={(e) => setEditRate(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      className="w-24"
+                      className="w-24 rounded-xl"
                     />
                   </div>
                   <div className="flex space-x-2">
                     <Button
                       size="sm"
                       onClick={handleUpdateClient}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-success text-success-foreground rounded-xl"
                       disabled={!editName.trim() || !editRate.trim()}
                     >
                       Opslaan
@@ -169,6 +172,7 @@ export function ClientManagement({
                       size="sm"
                       variant="outline"
                       onClick={handleCancelEdit}
+                      className="rounded-xl"
                     >
                       Annuleren
                     </Button>
@@ -177,8 +181,8 @@ export function ClientManagement({
               ) : (
                 <div className="flex justify-between items-center">
                   <div>
-                    <span className="font-medium">{client.naam}</span>
-                    <div className="text-sm text-slate-600">
+                    <span className="font-bold text-card-foreground">{client.naam}</span>
+                    <div className="text-sm text-muted-foreground font-medium">
                       {formatHourlyRate(client.hourly_rate || 0)}
                     </div>
                   </div>
@@ -187,7 +191,7 @@ export function ClientManagement({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleStartEdit(client)}
-                      className="text-blue-500 hover:text-blue-700 p-1"
+                      className="text-accent hover:text-accent-foreground hover:bg-accent/20 p-2 rounded-lg transition-colors"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -195,7 +199,7 @@ export function ClientManagement({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteClient(client.id)}
-                      className="text-red-500 hover:text-red-700 p-1"
+                      className="text-destructive hover:text-destructive-foreground hover:bg-destructive/20 p-2 rounded-lg transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

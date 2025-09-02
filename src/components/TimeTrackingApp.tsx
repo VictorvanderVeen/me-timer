@@ -329,12 +329,19 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
   const canUseApp = isConnected && tablesExist;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      <div className="container mx-auto p-4 md:p-8 max-w-4xl">
+    <div className="min-h-screen">
+      <div className="container mx-auto p-4 md:p-8 max-w-6xl">
         {/* Header */}
-        <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-slate-900">Urenregistratie</h1>
-          <p className="text-slate-500 mt-2">Voeg klanten toe en registreer je gewerkte uren per dag.</p>
+        <header className="text-center mb-12">
+          <div className="relative">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent mb-4">
+              Urenregistratie
+            </h1>
+            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-32 h-1 gradient-primary rounded-full opacity-60"></div>
+          </div>
+          <p className="text-muted-foreground text-lg mt-6 max-w-2xl mx-auto leading-relaxed">
+            Beheer je klanten en registreer je uren met een moderne, intuïtieve interface
+          </p>
         </header>
 
         {/* Configuration Panel */}

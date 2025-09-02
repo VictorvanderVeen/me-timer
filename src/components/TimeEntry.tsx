@@ -60,8 +60,11 @@ export function TimeEntry({ clients, onAddTimeRecord, disabled, selectedDate }: 
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md">
-      <h2 className="text-xl font-semibold mb-4 border-b pb-2">Uren Invoeren</h2>
+    <div className="bg-card p-6 rounded-2xl shadow-soft border border-border/50 backdrop-blur-sm">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-3 h-8 gradient-primary rounded-full"></div>
+        <h2 className="text-xl font-bold text-card-foreground">Uren Invoeren</h2>
+      </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -111,7 +114,7 @@ export function TimeEntry({ clients, onAddTimeRecord, disabled, selectedDate }: 
         <Button 
           type="submit" 
           disabled={disabled || isSubmitting || !selectedClientId || !hours || !date}
-          className="w-full bg-green-600 hover:bg-green-700"
+          className="w-full gradient-primary text-primary-foreground font-semibold py-6 rounded-xl shadow-colored hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
         >
           {isSubmitting ? 'Opslaan...' : 'Uren Opslaan'}
         </Button>

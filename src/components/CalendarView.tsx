@@ -107,22 +107,22 @@ export function CalendarView({ timeRecords, clients, disabled, onDateClick }: Ca
               title={`Klik om uren toe te voegen voor ${format(day, 'd MMM', { locale: nl })}`}
             >
               {dayRecords.length > 0 && (
-                <div className="space-y-1">
-                  {dayRecords.map(record => (
-                    <div key={record.id} className="text-xs p-2 bg-blue-50 rounded border-l-2 border-blue-400">
-                      <div className="font-medium text-blue-800 truncate">
-                        {record.klant_naam}
-                      </div>
-                      <div className="text-blue-600 flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {parseFloat(record.uren.toString()).toFixed(1)}u
-                      </div>
-                      {record.revenue > 0 && (
-                        <div className="text-green-600 font-medium">
-                          {formatCurrency(record.revenue)}
+                  <div className="space-y-2">
+                    {dayRecords.map(record => (
+                      <div key={record.id} className="text-xs p-3 gradient-primary rounded-xl shadow-sm border border-primary/20">
+                        <div className="font-bold text-primary-foreground truncate">
+                          {record.klant_naam}
                         </div>
-                      )}
-                    </div>
+                        <div className="text-primary-foreground/80 flex items-center gap-1 mt-1">
+                          <Clock className="h-3 w-3" />
+                          {parseFloat(record.uren.toString()).toFixed(1)}u
+                        </div>
+                        {record.revenue > 0 && (
+                          <div className="text-primary-foreground font-bold mt-1">
+                            {formatCurrency(record.revenue)}
+                          </div>
+                        )}
+                      </div>
                   ))}
                   
                   {dayRecords.length > 1 && (
@@ -202,11 +202,11 @@ export function CalendarView({ timeRecords, clients, disabled, onDateClick }: Ca
                   {dayRecords.length > 0 && isCurrentMonth && (
                     <div className="space-y-1">
                       {dayRecords.slice(0, 2).map(record => (
-                        <div key={record.id} className="text-xs p-1 bg-blue-50 rounded">
-                          <div className="font-medium text-blue-800 truncate">
+                        <div key={record.id} className="text-xs p-2 gradient-secondary rounded-lg shadow-sm">
+                          <div className="font-bold text-secondary-foreground truncate">
                             {record.klant_naam}
                           </div>
-                          <div className="text-blue-600">
+                          <div className="text-secondary-foreground/80 mt-1">
                             {parseFloat(record.uren.toString()).toFixed(1)}u
                           </div>
                         </div>
@@ -246,30 +246,34 @@ export function CalendarView({ timeRecords, clients, disabled, onDateClick }: Ca
     <div className="space-y-4">
       {/* Controls */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('prev')}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          
-          <h3 className="text-lg font-semibold min-w-[200px] text-center">
-            {viewType === 'week' 
-              ? `Week van ${format(getDateRange().start, 'd MMM', { locale: nl })} - ${format(getDateRange().end, 'd MMM yyyy', { locale: nl })}`
-              : format(currentDate, 'MMMM yyyy', { locale: nl })
-            }
-          </h3>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('next')}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('prev')}
+              className="rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <div className="px-6 py-3 gradient-subtle rounded-2xl shadow-sm border border-border/30">
+              <h3 className="text-lg font-bold text-center min-w-[200px]">
+                {viewType === 'week' 
+                  ? `Week van ${format(getDateRange().start, 'd MMM', { locale: nl })} - ${format(getDateRange().end, 'd MMM yyyy', { locale: nl })}`
+                  : format(currentDate, 'MMMM yyyy', { locale: nl })
+                }
+              </h3>
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('next')}
+              className="rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
 
         <div className="flex items-center gap-2">
           <Button
