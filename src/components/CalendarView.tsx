@@ -245,7 +245,7 @@ export function CalendarView({ timeRecords, clients, disabled, onDateClick }: Ca
   return (
     <div className="space-y-4">
       {/* Controls */}
-      <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
@@ -256,8 +256,8 @@ export function CalendarView({ timeRecords, clients, disabled, onDateClick }: Ca
               <ChevronLeft className="h-4 w-4" />
             </Button>
             
-            <div className="px-6 py-3 gradient-subtle rounded-2xl shadow-sm border border-border/30">
-              <h3 className="text-lg font-bold text-center min-w-[200px]">
+            <div className="px-4 sm:px-6 py-3 gradient-subtle rounded-2xl shadow-sm border border-border/30">
+              <h3 className="text-base sm:text-lg font-bold text-center min-w-[180px] sm:min-w-[200px]">
                 {viewType === 'week' 
                   ? `Week van ${format(getDateRange().start, 'd MMM', { locale: nl })} - ${format(getDateRange().end, 'd MMM yyyy', { locale: nl })}`
                   : format(currentDate, 'MMMM yyyy', { locale: nl })
@@ -275,30 +275,35 @@ export function CalendarView({ timeRecords, clients, disabled, onDateClick }: Ca
             </Button>
           </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant={viewType === 'week' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewType('week')}
-          >
-            Week
-          </Button>
-          <Button
-            variant={viewType === 'month' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewType('month')}
-          >
-            Maand
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentDate(new Date())}
-          >
-            Vandaag
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center bg-muted rounded-xl p-1 shadow-sm flex-1 sm:flex-none">
+              <Button
+                variant={viewType === 'week' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewType('week')}
+                className="flex-1 sm:flex-none h-8 px-3 rounded-lg"
+              >
+                Week
+              </Button>
+              <Button
+                variant={viewType === 'month' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewType('month')}
+                className="flex-1 sm:flex-none h-8 px-3 rounded-lg"
+              >
+                Maand
+              </Button>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentDate(new Date())}
+              className="rounded-xl shadow-sm hover:shadow-md transition-all duration-200 px-4"
+            >
+              Vandaag
+            </Button>
+          </div>
         </div>
-      </div>
 
       {/* Calendar */}
       <div className="border rounded-lg overflow-hidden">
