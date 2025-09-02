@@ -20,18 +20,21 @@ export type Database = {
           hourly_rate: number | null
           id: number
           naam: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           hourly_rate?: number | null
           id?: number
           naam: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           hourly_rate?: number | null
           id?: number
           naam?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -43,6 +46,7 @@ export type Database = {
           klant_id: number | null
           klant_naam: string
           uren: number
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -51,6 +55,7 @@ export type Database = {
           klant_id?: number | null
           klant_naam: string
           uren: number
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -59,6 +64,7 @@ export type Database = {
           klant_id?: number | null
           klant_naam?: string
           uren?: number
+          user_id?: string | null
         }
         Relationships: [
           {

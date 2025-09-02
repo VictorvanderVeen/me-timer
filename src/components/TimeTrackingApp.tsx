@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ConfigPanel } from './ConfigPanel';
 import { ClientManagement } from './ClientManagement';
 import { TimeEntry } from './TimeEntry';
 import { TimeOverview } from './TimeOverview';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { LogOut, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Client {
@@ -23,181 +25,59 @@ interface TimeRecord {
 }
 
 export function TimeTrackingApp() {
-  const [supabase, setSupabase] = useState<any>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [tablesExist, setTablesExist] = useState(false);
+  const { user, signOut } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [timeRecords, setTimeRecords] = useState<TimeRecord[]>([]);
   const [selectedMonth, setSelectedMonth] = useState('all');
-  const [isAutoConnecting, setIsAutoConnecting] = useState(false);
   const [selectedDateForEntry, setSelectedDateForEntry] = useState<string | undefined>();
+  const [loading, setLoading] = useState(true);
 
-  const saveConfig = (url: string, key: string) => {
-    localStorage.setItem('supabase-config', JSON.stringify({ url, key }));
-  };
-
-  const loadConfig = () => {
-    const config = localStorage.getItem('supabase-config');
-    if (config) {
-      return JSON.parse(config);
-    }
-    return null;
-  };
-
-  const connectToSupabase = async (url: string, key: string) => {
-    console.log('🔗 Poging tot verbinden met Supabase...');
-    if (!url || !key) {
-      console.log('❌ URL of key ontbreekt');
-      toast.error('Vul alle velden in');
-      return false;
-    }
-
-    try {
-      const supabaseClient = createClient(url, key);
-      
-      // Test the connection by trying to access the klanten table
-      const { data, error } = await supabaseClient.from('klanten').select('count', { count: 'exact', head: true });
-      
-      if (error && error.code === 'PGRST116') {
-        // Table doesn't exist, but connection works
-        setSupabase(supabaseClient);
-        setIsConnected(true);
-        setTablesExist(false);
-        saveConfig(url, key);
-        toast.error('Verbonden met Supabase, maar tabellen bestaan niet! Maak eerst de tabellen aan in je Supabase dashboard.');
-        console.log('Voer deze SQL uit in je Supabase SQL Editor:');
-        console.log(`
-CREATE TABLE IF NOT EXISTS klanten (
-    id SERIAL PRIMARY KEY,
-    naam VARCHAR(255) NOT NULL,
-    hourly_rate DECIMAL(8,2) DEFAULT 0.00,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS uren (
-    id SERIAL PRIMARY KEY,
-    klant_id INTEGER REFERENCES klanten(id) ON DELETE CASCADE,
-    klant_naam VARCHAR(255) NOT NULL,
-    uren DECIMAL(4,1) NOT NULL,
-    datum DATE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Enable Row Level Security (optioneel)
-ALTER TABLE klanten ENABLE ROW LEVEL SECURITY;
-ALTER TABLE uren ENABLE ROW LEVEL SECURITY;
-
--- Create policies (voor publieke toegang)
-CREATE POLICY "Enable all operations for all users" ON klanten FOR ALL USING (true);
-CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true);
-        `);
-        return true;
-      } else if (error) {
-        throw error;
-      } else {
-        // Everything works
-        setSupabase(supabaseClient);
-        setIsConnected(true);
-        setTablesExist(true);
-        saveConfig(url, key);
-        toast.success('Verbinding succesvol!');
-        await loadData(supabaseClient);
-        return true;
-      }
-    } catch (error: any) {
-      console.error('Verbindingsfout:', error);
-      toast.error('Verbindingsfout: ' + error.message);
-      return false;
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast.error('Fout bij uitloggen: ' + error.message);
     }
   };
 
-  const createTables = async () => {
-    if (!supabase) return false;
-
-    try {
-      // Test if tables exist now
-      const { data, error } = await supabase.from('klanten').select('count', { count: 'exact', head: true });
-      
-      if (!error) {
-        // Tables exist now!
-        setTablesExist(true);
-        toast.success('Tabellen gevonden! Laden van data...');
-        await loadData(supabase);
-        return true;
-      } else if (error.code === 'PGRST116') {
-        // Still don't exist
-        toast.error('Tabellen bestaan nog steeds niet. Voer de SQL uit in je Supabase dashboard en probeer opnieuw.');
-        console.log('SQL om uit te voeren in Supabase SQL Editor:');
-        console.log(`
-CREATE TABLE IF NOT EXISTS klanten (
-    id SERIAL PRIMARY KEY,
-    naam VARCHAR(255) NOT NULL,
-    hourly_rate DECIMAL(8,2) DEFAULT 0.00,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS uren (
-    id SERIAL PRIMARY KEY,
-    klant_id INTEGER REFERENCES klanten(id) ON DELETE CASCADE,
-    klant_naam VARCHAR(255) NOT NULL,
-    uren DECIMAL(4,1) NOT NULL,
-    datum DATE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-ALTER TABLE klanten ENABLE ROW LEVEL SECURITY;
-ALTER TABLE uren ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Enable all operations for all users" ON klanten FOR ALL USING (true);
-CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true);
-        `);
-        return false;
-      } else {
-        throw error;
-      }
-    } catch (error: any) {
-      console.error('Fout bij controleren tabellen:', error);
-      toast.error('Fout bij controleren tabellen: ' + error.message);
-      return false;
-    }
-  };
-
-  const loadData = async (supabaseClient = supabase) => {
-    if (!supabaseClient) return;
+  const loadData = async () => {
+    if (!user) return;
     
     try {
-      // Load clients
-      const { data: klantenData, error: klantenError } = await supabaseClient
+      // Load clients for current user
+      const { data: klantenData, error: klantenError } = await supabase
         .from('klanten')
         .select('*')
+        .eq('user_id', user.id)
         .order('naam');
       
       if (klantenError) throw klantenError;
       setClients(klantenData || []);
 
-      // Load time records
-      const { data: urenData, error: urenError } = await supabaseClient
+      // Load time records for current user
+      const { data: urenData, error: urenError } = await supabase
         .from('uren')
         .select('*')
+        .eq('user_id', user.id)
         .order('datum', { ascending: false });
       
       if (urenError) throw urenError;
       setTimeRecords(urenData || []);
-      setTablesExist(true);
       
     } catch (error: any) {
       console.error('Fout bij laden data:', error);
       toast.error('Fout bij laden data: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const addClient = async (naam: string, hourlyRate: number) => {
-    if (!naam || !supabase || hourlyRate <= 0) return false;
+    if (!naam || !user || hourlyRate <= 0) return false;
     
     try {
       const { data, error } = await supabase
         .from('klanten')
-        .insert([{ naam, hourly_rate: hourlyRate }])
+        .insert([{ naam, hourly_rate: hourlyRate, user_id: user.id }])
         .select();
       
       if (error) throw error;
@@ -213,13 +93,14 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
   };
 
   const updateClient = async (id: number, naam: string, hourlyRate: number) => {
-    if (!supabase || hourlyRate <= 0) return false;
+    if (!user || hourlyRate <= 0) return false;
     
     try {
       const { data, error } = await supabase
         .from('klanten')
         .update({ naam, hourly_rate: hourlyRate })
         .eq('id', id)
+        .eq('user_id', user.id)
         .select();
       
       if (error) throw error;
@@ -243,13 +124,14 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
   };
 
   const deleteClient = async (id: number) => {
-    if (!supabase) return false;
+    if (!user) return false;
     
     try {
       const { error } = await supabase
         .from('klanten')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
       
       if (error) throw error;
       
@@ -265,7 +147,7 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
   };
 
   const addTimeRecord = async (klantId: number, klantNaam: string, uren: number, datum: string) => {
-    if (!supabase) return false;
+    if (!user) return false;
     
     try {
       const { data, error } = await supabase
@@ -274,7 +156,8 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
           klant_id: klantId, 
           klant_naam: klantNaam, 
           uren: uren, 
-          datum 
+          datum,
+          user_id: user.id
         }])
         .select();
       
@@ -291,13 +174,14 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
   };
 
   const deleteTimeRecord = async (id: number) => {
-    if (!supabase) return false;
+    if (!user) return false;
     
     try {
       const { error } = await supabase
         .from('uren')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
       
       if (error) throw error;
       
@@ -312,27 +196,44 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
   };
 
   useEffect(() => {
-    console.log('🔄 App gestart, controleer opgeslagen configuratie...');
-    const config = loadConfig();
-    console.log('📋 Opgeslagen configuratie:', config ? 'gevonden' : 'niet gevonden');
-    if (config) {
-      console.log('🔗 Start automatische verbinding...');
-      setIsAutoConnecting(true);
-      connectToSupabase(config.url, config.key).finally(() => {
-        setIsAutoConnecting(false);
-      });
-    } else {
-      console.log('⚠️ Geen configuratie gevonden, gebruiker moet handmatig verbinden');
+    if (user) {
+      loadData();
     }
-  }, []);
+  }, [user]);
 
-  const canUseApp = isConnected && tablesExist;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Laden...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
       <div className="container mx-auto p-2 sm:p-4 md:p-8 max-w-6xl">
-        {/* Header */}
+        {/* Header with User Info */}
         <header className="text-center mb-8 sm:mb-12 px-2">
+          <div className="flex justify-between items-start mb-6">
+            <div></div>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <User className="h-4 w-4" />
+              <span>{user?.email}</span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSignOut}
+                className="ml-2"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Uitloggen
+              </Button>
+            </div>
+          </div>
+          
           <div className="relative">
             <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent mb-4">
               Urenregistratie
@@ -344,24 +245,14 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
           </p>
         </header>
 
-        {/* Configuration Panel */}
-        <ConfigPanel
-          onConnect={connectToSupabase}
-          onCreateTables={createTables}
-          isConnected={isConnected}
-          tablesExist={tablesExist}
-          loadConfig={loadConfig}
-          isAutoConnecting={isAutoConnecting}
-        />
-
         {/* Main Content */}
-        <main className={`grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8 transition-opacity ${canUseApp ? 'opacity-100' : 'opacity-50 pointer-events-none'} px-2 sm:px-0`}>
+        <main className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8 px-2 sm:px-0">
           {/* Left Column */}
           <div className="lg:col-span-1 space-y-4 sm:space-y-8">
             <TimeEntry
               clients={clients}
               onAddTimeRecord={addTimeRecord}
-              disabled={!canUseApp}
+              disabled={false}
               selectedDate={selectedDateForEntry}
             />
             
@@ -370,7 +261,7 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
               onAddClient={addClient}
               onUpdateClient={updateClient}
               onDeleteClient={deleteClient}
-              disabled={!canUseApp}
+              disabled={false}
             />
           </div>
 
@@ -381,17 +272,12 @@ CREATE POLICY "Enable all operations for all users" ON uren FOR ALL USING (true)
               selectedMonth={selectedMonth}
               onMonthChange={setSelectedMonth}
               onDeleteRecord={deleteTimeRecord}
-              disabled={!canUseApp}
+              disabled={false}
               clients={clients}
               onDateClick={setSelectedDateForEntry}
             />
           </div>
         </main>
-        
-        {/* Footer */}
-        <footer className="text-center mt-8 text-xs text-slate-400">
-          <p>Status: <span>{isConnected ? (tablesExist ? 'Supabase verbonden' : 'Tabellen vereist') : 'Configuratie vereist'}</span></p>
-        </footer>
       </div>
     </div>
   );
