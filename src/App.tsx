@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { TimeTrackingApp } from './components/TimeTrackingApp';
 import { Auth } from './pages/Auth';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { SubscriptionGate } from './components/SubscriptionGate';
 import { Toaster } from './components/ui/sonner';
 
 function App() {
@@ -11,21 +12,25 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/auth" element={<Auth />} />
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
             <ProtectedRoute>
-              <TimeTrackingApp />
+              <SubscriptionGate>
+                <TimeTrackingApp />
+              </SubscriptionGate>
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="*" 
+        <Route
+          path="*"
           element={
             <ProtectedRoute>
-              <TimeTrackingApp />
+              <SubscriptionGate>
+                <TimeTrackingApp />
+              </SubscriptionGate>
             </ProtectedRoute>
-          } 
+          }
         />
       </Routes>
       <Toaster />
