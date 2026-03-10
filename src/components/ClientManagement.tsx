@@ -2,49 +2,63 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Trash2, Edit } from 'lucide-react';
+import { Trash2, Edit, Settings, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatHourlyRate } from '@/lib/currency';
 
 interface Client {
   id: number;
   naam: string;
   hourly_rate: number;
+  multiplication_factor: number;
+  weekly_hours: number | null;
   created_at: string;
 }
 
 interface ClientManagementProps {
   clients: Client[];
-  onAddClient: (naam: string, hourlyRate: number) => Promise<boolean>;
-  onUpdateClient: (id: number, naam: string, hourlyRate: number) => Promise<boolean>;
+  onAddClient: (naam: string, hourlyRate: number, multiplicationFactor?: number, weeklyHours?: number | null) => Promise<boolean>;
+  onUpdateClient: (id: number, naam: string, hourlyRate: number, multiplicationFactor?: number, weeklyHours?: number | null) => Promise<boolean>;
   onDeleteClient: (id: number) => Promise<boolean>;
   disabled: boolean;
 }
 
-export function ClientManagement({ 
-  clients, 
-  onAddClient, 
-  onUpdateClient, 
-  onDeleteClient, 
-  disabled 
+export function ClientManagement({
+  clients,
+  onAddClient,
+  onUpdateClient,
+  onDeleteClient,
+  disabled
 }: ClientManagementProps) {
   const [newClientName, setNewClientName] = useState('');
   const [newClientRate, setNewClientRate] = useState('');
+  const [newClientFactor, setNewClientFactor] = useState('1.25');
+  const [newClientWeeklyHours, setNewClientWeeklyHours] = useState('');
+  const [showNewClientSettings, setShowNewClientSettings] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [editName, setEditName] = useState('');
   const [editRate, setEditRate] = useState('');
+  const [editFactor, setEditFactor] = useState('');
+  const [editWeeklyHours, setEditWeeklyHours] = useState('');
+  const [showEditSettings, setShowEditSettings] = useState(false);
 
   const handleAddClient = async () => {
     if (!newClientName.trim() || !newClientRate.trim()) return;
-    
+
     const rate = parseFloat(newClientRate);
     if (rate <= 0) return;
-    
+
+    const factor = parseFloat(newClientFactor) || 1.25;
+    const weeklyHours = newClientWeeklyHours ? parseFloat(newClientWeeklyHours) : null;
+
     setIsAdding(true);
-    const success = await onAddClient(newClientName.trim(), rate);
+    const success = await onAddClient(newClientName.trim(), rate, factor, weeklyHours);
     if (success) {
       setNewClientName('');
       setNewClientRate('');
+      setNewClientFactor('1.25');
+      setNewClientWeeklyHours('');
+      setShowNewClientSettings(false);
     }
     setIsAdding(false);
   };
@@ -52,21 +66,29 @@ export function ClientManagement({
   const handleStartEdit = (client: Client) => {
     setEditingClient(client);
     setEditName(client.naam);
-    // Add null check for hourly_rate
     setEditRate((client.hourly_rate || 0).toString());
+    setEditFactor((client.multiplication_factor || 1.25).toString());
+    setEditWeeklyHours(client.weekly_hours ? client.weekly_hours.toString() : '');
+    setShowEditSettings(true);
   };
 
   const handleUpdateClient = async () => {
     if (!editingClient || !editName.trim() || !editRate.trim()) return;
-    
+
     const rate = parseFloat(editRate);
     if (rate <= 0) return;
-    
-    const success = await onUpdateClient(editingClient.id, editName.trim(), rate);
+
+    const factor = parseFloat(editFactor) || 1.25;
+    const weeklyHours = editWeeklyHours ? parseFloat(editWeeklyHours) : null;
+
+    const success = await onUpdateClient(editingClient.id, editName.trim(), rate, factor, weeklyHours);
     if (success) {
       setEditingClient(null);
       setEditName('');
       setEditRate('');
+      setEditFactor('');
+      setEditWeeklyHours('');
+      setShowEditSettings(false);
     }
   };
 
@@ -74,6 +96,9 @@ export function ClientManagement({
     setEditingClient(null);
     setEditName('');
     setEditRate('');
+    setEditFactor('');
+    setEditWeeklyHours('');
+    setShowEditSettings(false);
   };
 
   const handleDeleteClient = async (id: number) => {
@@ -98,7 +123,7 @@ export function ClientManagement({
         <div className="w-3 h-8 gradient-secondary rounded-full"></div>
         <h2 className="text-xl font-bold text-card-foreground">Klanten Beheer</h2>
       </div>
-      
+
       <div className="space-y-3 mb-4">
         <div className="flex items-center space-x-2">
           <Input
@@ -121,7 +146,7 @@ export function ClientManagement({
             disabled={disabled}
             className="w-24"
           />
-          <Button 
+          <Button
             onClick={handleAddClient}
             disabled={disabled || isAdding || !newClientName.trim() || !newClientRate.trim()}
             className="gradient-secondary text-secondary-foreground font-semibold shrink-0 rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
@@ -129,9 +154,50 @@ export function ClientManagement({
             {isAdding ? 'Toevoegen...' : 'Voeg toe'}
           </Button>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setShowNewClientSettings(!showNewClientSettings)}
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-card-foreground transition-colors"
+        >
+          <Settings className="h-3.5 w-3.5" />
+          <span>Extra instellingen</span>
+          {showNewClientSettings ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        </button>
+
+        {showNewClientSettings && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-muted/50 rounded-xl border border-border/30">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Factor</label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="1.25"
+                value={newClientFactor}
+                onChange={(e) => setNewClientFactor(e.target.value)}
+                disabled={disabled}
+                className="h-8 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Weekbudget (uren/week)</label>
+              <Input
+                type="number"
+                step="0.5"
+                min="0"
+                placeholder="bijv. 8 of 16"
+                value={newClientWeeklyHours}
+                onChange={(e) => setNewClientWeeklyHours(e.target.value)}
+                disabled={disabled}
+                className="h-8 text-sm"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-      <ul className="space-y-2 max-h-48 overflow-y-auto">
+      <ul className="space-y-2 max-h-64 overflow-y-auto">
         {disabled ? (
           <li className="text-slate-500 px-2">Verbind eerst met Supabase</li>
         ) : clients.length === 0 ? (
@@ -159,6 +225,45 @@ export function ClientManagement({
                       className="w-24 rounded-xl"
                     />
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowEditSettings(!showEditSettings)}
+                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-card-foreground transition-colors"
+                  >
+                    <Settings className="h-3.5 w-3.5" />
+                    <span>Facturatie-instellingen</span>
+                    {showEditSettings ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                  </button>
+
+                  {showEditSettings && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-muted/50 rounded-xl border border-border/30">
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Factor</label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editFactor}
+                          onChange={(e) => setEditFactor(e.target.value)}
+                          className="h-8 text-sm rounded-xl"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Weekbudget (uren/week)</label>
+                        <Input
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          placeholder="bijv. 8 of 16"
+                          value={editWeeklyHours}
+                          onChange={(e) => setEditWeeklyHours(e.target.value)}
+                          className="h-8 text-sm rounded-xl"
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex space-x-2">
                     <Button
                       size="sm"
@@ -184,7 +289,15 @@ export function ClientManagement({
                     <span className="font-bold text-card-foreground">{client.naam}</span>
                     <div className="text-sm text-muted-foreground font-medium">
                       {formatHourlyRate(client.hourly_rate || 0)}
+                      <span className="ml-2 text-xs opacity-70">
+                        (&times;{(client.multiplication_factor || 1.25).toFixed(2)})
+                      </span>
                     </div>
+                    {client.weekly_hours && (
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {client.weekly_hours}u/week
+                      </div>
+                    )}
                   </div>
                   <div className="flex space-x-1">
                     <Button

@@ -19,6 +19,8 @@ export type Database = {
           created_at: string | null
           hourly_rate: number | null
           id: number
+          multiplication_factor: number | null
+          weekly_hours: number | null
           naam: string
           user_id: string | null
         }
@@ -26,6 +28,8 @@ export type Database = {
           created_at?: string | null
           hourly_rate?: number | null
           id?: number
+          multiplication_factor?: number | null
+          weekly_hours?: number | null
           naam: string
           user_id?: string | null
         }
@@ -33,10 +37,71 @@ export type Database = {
           created_at?: string | null
           hourly_rate?: number | null
           id?: number
+          multiplication_factor?: number | null
+          weekly_hours?: number | null
           naam?: string
           user_id?: string | null
         }
         Relationships: []
+      }
+      vrije_dagen: {
+        Row: {
+          id: number
+          user_id: string | null
+          datum: string
+          omschrijving: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: number
+          user_id?: string | null
+          datum: string
+          omschrijving?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: number
+          user_id?: string | null
+          datum?: string
+          omschrijving?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      budget_overrides: {
+        Row: {
+          id: number
+          user_id: string | null
+          klant_id: number
+          maand: string
+          budget_uren: number
+          created_at: string | null
+        }
+        Insert: {
+          id?: number
+          user_id?: string | null
+          klant_id: number
+          maand: string
+          budget_uren: number
+          created_at?: string | null
+        }
+        Update: {
+          id?: number
+          user_id?: string | null
+          klant_id?: number
+          maand?: string
+          budget_uren?: number
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_overrides_klant_id_fkey"
+            columns: ["klant_id"]
+            isOneToOne: false
+            referencedRelation: "klanten"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       uren: {
         Row: {
